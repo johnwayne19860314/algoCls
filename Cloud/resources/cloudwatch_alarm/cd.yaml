@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template to create CloudWatch alarms for EKS CPU and Memory usage
+
+Parameters:
+  EksClusterName:
+    Type: String
+    Description: Name of the EKS cluster
+
+  PodName:
+    Type: String
+    Description: Name of the EKS pod
+
+Resources:
+  EKSCPUAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Alarm for EKS Pod CPU usage exceeding 80%
+      Namespace: AWS/EKS
+      MetricName: CPUUtilization
+      Statistic: Average
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: ClusterName
+          Value: !Ref EksClusterName
+        - Name: PodName
+          Value: !Ref PodName
+      AlarmActions: []  # Add SNS topic ARN or other actions if needed
+
+  EKSMemoryAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Alarm for EKS Pod Memory usage exceeding 80%
+      Namespace: AWS/EKS
+      MetricName: MemoryUtilization
+      Statistic: Average
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: ClusterName
+          Value: !Ref EksClusterName
+        - Name: PodName
+          Value: !Ref PodName
+      AlarmActions: []  # Add SNS topic ARN or other actions if needed
+
+Outputs:
+  CPUAlarmName:
+    Description: Name of the CPU Alarm
+    Value: !Ref EKSCPUAlarm
+
+  MemoryAlarmName:
+    Description: Name of the Memory Alarm
+    Value: !Ref EKSMemoryAlarm

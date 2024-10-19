@@ -1,0 +1,224 @@
+# This OpenAPI/Swagger specification file describes the back-end microservice
+# REST API that the React front-end app is expecting to connect to.
+openapi: 3.0.0
+info:
+  title: readcommend
+  version: 1.0.0
+  description: |
+    Readcommend is a book recommendation web app for the true book aficionados and disavowed
+    human-size bookworms. It allows to search for book recommendations with best ratings, based
+    on different search criteria.
+servers:
+  - url: http://localhost:5001/api/v1
+    description: Local server
+paths:
+  /books:
+    get:
+      summary: Gets ranked and filtered list of books
+      description: |
+        Gets list of books, ordered by rank from best to worst rated, with optional filters. Multiple
+        filters can be specified: author(s), genre(s), min/max number of pages, min/max published date,
+        as well as maximum number of results.
+      operationId: GetBooks
+      parameters:
+        - name: authors
+          in: query
+          required: false
+          description: |
+            Comma-delimited list of numeric author IDs. If multiple IDs are specified, the results will
+            include the union of all given authors, intersected with criteria of other types, if any.
+            When omitted, results will not be filtered by author.
+          example: 123,456,789
+          schema:
+            type: string
+            pattern: ^([0-9]+,)*[0-9]+$
+        - name: genres
+          in: query
+          required: false
+          description: |
+            Comma-delimited list of numeric genre IDs. If multiple IDs are specified, the results will
+            include the union of all given genres, intersected with criteria of other types, if any.
+            When omitted, results will not be filtered by genre.
+          example: 123,456,789
+          schema:
+            type: string
+            pattern: ^([0-9]+,)*[0-9]+$
+        - name: min-pages
+          in: query
+          required: false
+          description: Inclusive minimum number of pages.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10000
+        - name: max-pages
+          in: query
+          required: false
+          description: Inclusive maximum number of pages.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10000
+        - name: min-year
+          in: query
+          required: false
+          description: |
+            Inclusive minimum publishing year.
+          schema:
+            type: integer
+            minimum: 1800
+            maximum: 2100
+        - name: max-year
+          in: query
+          required: false
+          description: |
+            Inclusive maximum publishing year.
+          schema:
+            type: integer
+            minimum: 1800
+            maximum: 2100
+        - name: limit
+          in: query
+          required: false
+          description: |
+            Inclusive maximum number of results to return (defaults to all results).
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        200:
+          description: Json list of books
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                - id: 1
+                  title: Alanna Saves the Day
+                  yearPublished: 1972
+                  rating: 1.62
+                  pages: 169
+                  genre:
+                    id: 8
+                    title: Childrens
+                  author:
+                    id: 6
+                    firstName: Bernard
+                    lastName: Hopf
+                - id: 2
+                  title: Adventures of Kaya
+                  yearPublished: 1999
+                  rating: 2.13
+                  pages: 619
+                  genre:
+                    id: 1
+                    title: Young Adult
+                  author:
+                    id: 40
+                    firstName: Ward
+                    lastName: Haigh
+        400:
+          description: |
+            Bad Request, most likely because of invalid query parameters
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                message: invalid query parameters
+  /authors:
+    get:
+      summary: Gets all authors
+      description: |
+        Gets list of all authors. As this list would typically be quite huge in a
+        real production dataset, an important improvement would be to dynamically
+        query authors by first few characters as user is typing.
+      operationId: GetAuthors
+      responses:
+        200:
+          description: Json list of authors
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                - id: 1
+                  firstName: Abraham
+                  lastName: Stackhouse
+                - id: 2
+                  firstName: Amelia
+                  lastName: Wangerin, Jr.
+                - id: 3
+                  firstName: Anastasia
+                  lastName: Inez
+  /genres:
+    get:
+      summary: Gets all genres
+      description: |
+        Gets list of all genres.
+      operationId: GetGenres
+      responses:
+        200:
+          description: Json list of genres
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                - id: 1
+                  title: Young Adult
+                - id: 2
+                  title: SciFi/Fantasy
+                - id: 3
+                  title: Romance
+  /sizes:
+    get:
+      summary: Gets all book size ranges
+      description: Gets list of all book size ranges.
+      operationId: GetSizes
+      responses:
+        200:
+          description: |
+            Json list of size ranges. Note that IDs are returned only as a convenience
+            for UI, but are not used for querying books of given size (use minPages
+            and maxPages as filtering criteria instead).
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                - id: 1
+                  title: Short story – up to 35 pages
+                  maxPages: 34
+                - id: 2
+                  title: Novelette – 35 to 85 pages
+                  minPages: 35
+                  maxPages: 84
+                - id: 6
+                  title: Monument – 800 pages and up
+                  minPages: 800
+  /eras:
+    get:
+      summary: Gets all eras
+      description: |
+        Gets list of all eras (ranges of publishing years). Minimum
+        and maximum years are both inclusive and either of them
+        may be omitted for an unbounded range in either direction.
+      operationId: GetEras
+      responses:
+        200:
+          description: |
+            Json list of eras. Note that IDs are returned only as a convenience
+            for UI, but are not used for querying books of given era (use minYear
+            and maxYear as filtering criteria instead).
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                - id: 1
+                  title: Classic
+                  maxYear: 1969
+                - id: 2
+                  title: Modern
+                  minYear: 1970

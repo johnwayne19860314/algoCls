@@ -1,0 +1,25 @@
+# aws cloudformation create-stack --stack-name myStack --template-body file://template.yml
+
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Simple CloudFormation template to create an EC2 instance.
+
+Resources:
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable HTTP access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: '0.0.0.0/0'
+
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      SecurityGroups:
+        - Ref: MySecurityGroup
+      ImageId: ami-0c55b159cbfafe1f0  # Amazon Linux 2 AMI
+      KeyName: my-keypair  # Replace with your own keypair

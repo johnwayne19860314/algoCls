@@ -1,0 +1,17 @@
+apiVersion: kubedb.com/v1alpha2
+kind: Postgres
+metadata:
+  name: postgres-cluster
+  namespace: database
+spec:
+  version: "16.2-bullseye-postgis"
+  replicas: 3
+  storageType: Durable
+  storage:
+    storageClassName: "gp2"
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 10Gi
+  terminationPolicy: WipeOut

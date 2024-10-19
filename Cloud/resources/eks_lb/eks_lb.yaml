@@ -1,0 +1,73 @@
+# aws cloudformation create-stack --stack-name my-eks-stack --template-body file://your_template.yaml --parameters ParameterKey=VpcId,ParameterValue=vpc-abc123 ParameterKey=SubnetIds,ParameterValue="subnet-abc123,subnet-def456" ParameterKey=SecurityGroupIds,ParameterValue="sg-abc123,sg-def456"
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation template to create an EKS cluster and an Application Load Balancer
+
+Parameters:
+  ClusterName:
+    Type: String
+    Default: my-eks-cluster
+  VpcId:
+    Type: String
+    Description: VPC ID where the EKS cluster will be created
+  SubnetIds:
+    Type: List<String>
+    Description: List of Subnet IDs for EKS
+  SecurityGroupIds:
+    Type: List<String>
+    Description: List of Security Group IDs for EKS
+  LoadBalancerName:
+    Type: String
+    Default: my-load-balancer
+
+Resources:
+  EKSCluster:
+    Type: AWS::EKS::Cluster
+    Properties:
+      Name: !Ref ClusterName
+      RoleArn: arn:aws:iam::123456789012:role/EKS-Cluster-Role  # Replace with your IAM role ARN
+      ResourcesVpcConfig:
+        SubnetIds: !Ref SubnetIds
+        SecurityGroupIds: !Ref SecurityGroupIds
+        EndpointPublicAccess: true
+
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Ref LoadBalancerName
+      Subnets: !Ref SubnetIds
+      SecurityGroups: !Ref SecurityGroupIds
+      Scheme: internet-facing
+      Type: application
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub "${LoadBalancerName}-target-group"
+      Protocol: HTTP
+      Port: 80
+      VpcId: !Ref VpcId
+      HealthCheckProtocol: HTTP
+      HealthCheckPath: /
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 5
+      UnhealthyThresholdCount: 2
+
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+
+Outputs:
+  EKSClusterName:
+    Description: "EKS Cluster Name"
+    Value: !Ref EKSCluster
+  LoadBalancerDNS:
+    Description: "DNS name of the Load Balancer"
+    Value: !GetAtt LoadBalancer.DNSName
